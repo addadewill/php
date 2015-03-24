@@ -1,0 +1,4 @@
+/sys/class/*.php~
+/sys/config/*.php~
+/sys/core/*.php~
+/public/*.php~

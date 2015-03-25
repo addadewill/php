@@ -17,7 +17,7 @@ class Calendar extends DB_Connect
 
     /**
      * The date from which the calendar should be built
-     *
+     *日历是根据这个日期创建的
      * Stored in YYYY-MM-DD HH:MM:SS format
      *
      * @var string the date to use for the calendar
@@ -59,12 +59,12 @@ class Calendar extends DB_Connect
      * that, if not null, is stored in the object's private $_db
      * property. If null, a new PDO object is created and stored
      * instead.
-     *
+     *接受一个数据库对象参数，如果参数有效，就把它存到私有变量$_db中
      * Additional info is gathered and stored in this method,
      * including the month from which the calendar is to be built,
      * how many days are in said month, what day the month starts
      * on, and what day it is currently.
-     *
+     *收集当前日期，年分，月份，这个月有多少天，这个月从星期几开始
      * @param object $dbo a database object
      * @param string $useDate the date to use to build the calendar
      * @return void
@@ -115,7 +115,7 @@ class Calendar extends DB_Connect
 
     /**
      * Loads event(s) info into an array
-     *
+     *其实就是写一个方法从数据库获得数据，将其存入一个数组
      * @param int $id an optional event ID to filter results
      * @return array an array of events from the database
      */
@@ -173,7 +173,6 @@ class Calendar extends DB_Connect
             $stmt->execute();
             $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
             $stmt->closeCursor();
-
             return $results;
         }
         catch ( Exception $e )
@@ -184,7 +183,8 @@ class Calendar extends DB_Connect
 
     /**
      * Loads all events for the month into an array
-     *
+     *Event类己能够将活动保存为对象，接下来要创建一个方法循环处理这些活动
+		 *将它们按活动日期储存在数组中。
      * @return array events info
      */
     private function _createEventObj()
@@ -196,8 +196,8 @@ class Calendar extends DB_Connect
 
         /*
          * Create a new array, then organize the events
-         * by the day of the month
- on which they occur
+				 *按照活动发生在该月第几天将活动数据重新组织到一个新数组
+         * by the day of the month on which they occur
          */
         $events = array();
         foreach ( $arr as $event )
@@ -213,6 +213,7 @@ class Calendar extends DB_Connect
                 die ( $e->getMessage() );
             }
         }
+			//	echo var_dump($events);
         return $events;
     }
 
@@ -237,6 +238,7 @@ class Calendar extends DB_Connect
 
         /*
          * Add a header to the calendar markup
+				 *得到显示年月的标题和日历的第一栏，星期
          */
         $html = "\n\t<h2>$cal_month</h2>";
         for ( $d=0, $labels=NULL; $d<7; ++$d )

@@ -331,9 +331,18 @@ class Calendar extends DB_Connect
         $html .= "\n\t</ul>\n\n";
 
         /*
+         * Return the markup for output这是个注意的地方，如何返回
+         */
+       // return $html;
+        /*
+         * If logged in, display the admin options
+         */
+        $admin = $this->_adminGeneralOptions();
+
+        /*
          * Return the markup for output
          */
-        return $html;
+        return $html . $admin;
     }
 
     /**
@@ -407,6 +416,159 @@ class Calendar extends DB_Connect
         {
             return NULL;
         }
+    }
+//***********以下代码是新建，删除，修改活动的代码
+    public function displayForm()
+    {
+        /*
+         * Check if an ID was passed
+         */
+        if ( isset($_POST['event_id']) )
+        {
+            $id = (int) $_POST['event_id']; // Force integer type to sanitize data
+        }
+        else
+        {
+            $id = NULL;
+        }
+
+        /*
+         * Instantiate the headline/submit button text
+         */
+        $submit = "Create a New Event";
+
+        /*
+         * If an ID is passed, loads the associated event
+         */
+        if ( !empty($id) )
+        {
+            $event = $this->_loadEventById($id);
+
+            /*
+             * If no object is returned, return NULL
+             */
+            if ( !is_object($event) ) { return NULL; }
+
+            $submit = "Edit This Event";
+        }
+
+        /*
+         * Build the markup
+         */
+        return <<<FORM_MARKUP
+
+    <form action="assets/inc/process.inc.php" method="post">
+        <fieldset>
+            <legend>$submit</legend>
+            <label for="event_title">Event Title</label>
+            <input type="text" name="event_title"
+                  id="event_title" value="$event->title" />
+            <label for="event_start">Start Time</label>
+            <input type="text" name="event_start"
+                  id="event_start" value="$event->start" />
+            <label for="event_end">End Time</label>
+            <input type="text" name="event_end"
+                  id="event_end" value="$event->end" />
+            <label for="event_description">Event Description</label>
+            <textarea name="event_description"
+                  id="event_description">$event->description</textarea>
+            <input type="hidden" name="event_id" value="$event->id" />
+            <input type="hidden" name="token" value="$_SESSION[token]" />
+            <input type="hidden" name="action" value="event_edit" />
+            <input type="submit" name="event_submit" value="$submit" />
+            or <a href="./">cancel</a>
+        </fieldset>
+    </form>
+FORM_MARKUP;
+    }
+
+    /**
+     * Validates the form and saves/edits the event
+     *
+     * @return mixed TRUE on success, an error message on failure
+     */
+    public function processForm()
+    {
+        /*
+         * Exit if the action isn't set properly
+         */
+        if ( $_POST['action']!='event_edit' )
+        {
+            return "The method processForm was accessed incorrectly";
+        }
+
+        /*
+         * Escape data from the form
+         */
+        $title = htmlentities($_POST['event_title'], ENT_QUOTES);
+        $desc = htmlentities($_POST['event_description'], ENT_QUOTES);
+        $start = htmlentities($_POST['event_start'], ENT_QUOTES);
+        $end = htmlentities($_POST['event_end'], ENT_QUOTES);
+
+        /*
+         * If no event ID passed, create a new event
+         */
+        if ( empty($_POST['event_id']) )
+        {
+            $sql = "INSERT INTO `events`
+                        (`event_title`, `event_desc`, `event_start`,
+                            `event_end`)
+                    VALUES
+                        (:title, :description, :start, :end)";
+        }
+
+        /*
+         * Update the event if it's being edited
+         */
+        else
+        {
+            /*
+             * Cast the event ID as an integer for security
+             */
+            $id = (int) $_POST['event_id'];
+            $sql = "UPDATE `events`
+                    SET
+                        `event_title`=:title,
+                        `event_desc`=:description,
+                        `event_start`=:start,
+                        `event_end`=:end
+                    WHERE `event_id`=$id";
+        }
+
+        /*
+         * Execute the create or edit query after binding the data
+         */
+        try
+        {
+            $stmt = $this->db->prepare($sql);
+            $stmt->bindParam(":title", $title, PDO::PARAM_STR);
+            $stmt->bindParam(":description", $desc, PDO::PARAM_STR);
+            $stmt->bindParam(":start", $start, PDO::PARAM_STR);
+            $stmt->bindParam(":end", $end, PDO::PARAM_STR);
+            $stmt->execute();
+            $stmt->closeCursor();
+            return TRUE;
+        }
+        catch ( Exception $e )
+        {
+            return $e->getMessage();
+        }
+    }
+
+    /**
+     * Generates markup to display administrative links
+     *
+     * @return string markup to display the administrative links
+     */
+    private function _adminGeneralOptions()
+    {
+        /*
+         * Display admin controls
+         */
+        return <<<ADMIN_OPTIONS
+
+    <a href="admin.php" class="admin">+ Add a New Event</a>
+ADMIN_OPTIONS;
     }
 
 }

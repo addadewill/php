@@ -8,14 +8,14 @@ include_once '../sys/core/init.inc.php';
 /*
  * Load the calendar for January
  */
-$cal = new Calendar($dbo );
+$cal = new Calendar();
 //$cal = new Calendar($dbo, "2015-01-01 12:00:00");
 //echo "<pre>", var_dump($cal), "</pre>";
 /*
  * Set up the page title and CSS files
  */
 $page_title = "Events Calendar";
-$css_files = array('style.css');
+$css_files = array('style.css', 'admin.css');
 
 /*
  * Include the header
